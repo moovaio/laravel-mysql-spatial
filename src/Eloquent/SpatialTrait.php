@@ -130,11 +130,12 @@ trait SpatialTrait
         return true;
     }
 
-    public function scopeDistance($query, $geometryColumn, $geometry, $distance)
+    public function scopeDistance($query, $geometryColumn, $geometry, $distance, $geometryOptions = null)
     {
         $this->isColumnAllowed($geometryColumn);
 
-        $query->whereRaw("st_distance(`$geometryColumn`, ST_GeomFromText(?, ?, 'axis-order=long-lat')) <= ?", [
+        $geometryObjectText = $this->getGeometryObjectText($geometryOptions);
+        $query->whereRaw("st_distance(`$geometryColumn`, $geometryObjectText) <= ?", [
             $geometry->toWkt(),
             $geometry->getSrid(),
             $distance,
@@ -143,13 +144,13 @@ trait SpatialTrait
         return $query;
     }
 
-    public function scopeDistanceExcludingSelf($query, $geometryColumn, $geometry, $distance)
+    public function scopeDistanceExcludingSelf($query, $geometryColumn, $geometry, $distance, $geometryOptions = null)
     {
         $this->isColumnAllowed($geometryColumn);
 
         $query = $this->scopeDistance($query, $geometryColumn, $geometry, $distance);
-
-        $query->whereRaw("st_distance(`$geometryColumn`, ST_GeomFromText(?, ?, 'axis-order=long-lat')) != 0", [
+        $geometryObjectText = $this->getGeometryObjectText($geometryOptions);
+        $query->whereRaw("st_distance(`$geometryColumn`, $geometryObjectText) != 0", [
             $geometry->toWkt(),
             $geometry->getSrid(),
         ]);
@@ -157,7 +158,7 @@ trait SpatialTrait
         return $query;
     }
 
-    public function scopeDistanceValue($query, $geometryColumn, $geometry)
+    public function scopeDistanceValue($query, $geometryColumn, $geometry, $geometryOptions = null)
     {
         $this->isColumnAllowed($geometryColumn);
 
@@ -166,18 +167,18 @@ trait SpatialTrait
         if (!$columns) {
             $query->select('*');
         }
-
-        $query->selectRaw("st_distance(`$geometryColumn`, ST_GeomFromText(?, ?, 'axis-order=long-lat')) as distance", [
+        $geometryObjectText = $this->getGeometryObjectText($geometryOptions);
+        $query->selectRaw("st_distance(`$geometryColumn`, $geometryObjectText) as distance", [
             $geometry->toWkt(),
             $geometry->getSrid(),
         ]);
     }
 
-    public function scopeDistanceSphere($query, $geometryColumn, $geometry, $distance)
+    public function scopeDistanceSphere($query, $geometryColumn, $geometry, $distance, $geometryOptions = null)
     {
         $this->isColumnAllowed($geometryColumn);
-
-        $query->whereRaw("st_distance_sphere(`$geometryColumn`, ST_GeomFromText(?, ?, 'axis-order=long-lat')) <= ?", [
+        $geometryObjectText = $this->getGeometryObjectText($geometryOptions);
+        $query->whereRaw("st_distance_sphere(`$geometryColumn`, $geometryObjectText) <= ?", [
             $geometry->toWkt(),
             $geometry->getSrid(),
             $distance,
@@ -186,13 +187,13 @@ trait SpatialTrait
         return $query;
     }
 
-    public function scopeDistanceSphereExcludingSelf($query, $geometryColumn, $geometry, $distance)
+    public function scopeDistanceSphereExcludingSelf($query, $geometryColumn, $geometry, $distance, $geometryOptions = null)
     {
         $this->isColumnAllowed($geometryColumn);
 
         $query = $this->scopeDistanceSphere($query, $geometryColumn, $geometry, $distance);
-
-        $query->whereRaw("st_distance_sphere($geometryColumn, ST_GeomFromText(?, ?, 'axis-order=long-lat')) != 0", [
+        $geometryObjectText = $this->getGeometryObjectText($geometryOptions);
+        $query->whereRaw("st_distance_sphere($geometryColumn, $geometryObjectText) != 0", [
             $geometry->toWkt(),
             $geometry->getSrid(),
         ]);
@@ -200,7 +201,7 @@ trait SpatialTrait
         return $query;
     }
 
-    public function scopeDistanceSphereValue($query, $geometryColumn, $geometry)
+    public function scopeDistanceSphereValue($query, $geometryColumn, $geometry, $geometryOptions = null)
     {
         $this->isColumnAllowed($geometryColumn);
 
@@ -209,21 +210,22 @@ trait SpatialTrait
         if (!$columns) {
             $query->select('*');
         }
-        $query->selectRaw("st_distance_sphere(`$geometryColumn`, ST_GeomFromText(?, ?, 'axis-order=long-lat')) as distance", [
+        $geometryObjectText = $this->getGeometryObjectText($geometryOptions);
+        $query->selectRaw("st_distance_sphere(`$geometryColumn`, $geometryObjectText) as distance", [
             $geometry->toWkt(),
             $geometry->getSrid(),
         ]);
     }
 
-    public function scopeComparison($query, $geometryColumn, $geometry, $relationship)
+    public function scopeComparison($query, $geometryColumn, $geometry, $relationship, $geometryOptions = null)
     {
         $this->isColumnAllowed($geometryColumn);
 
         if (!in_array($relationship, $this->stRelations)) {
             throw new UnknownSpatialRelationFunction($relationship);
         }
-
-        $query->whereRaw("st_{$relationship}(`$geometryColumn`, ST_GeomFromText(?, ?, 'axis-order=long-lat'))", [
+        $geometryObjectText = $this->getGeometryObjectText($geometryOptions);
+        $query->whereRaw("st_{$relationship}(`$geometryColumn`, $geometryObjectText)", [
             $geometry->toWkt(),
             $geometry->getSrid(),
         ]);
@@ -271,15 +273,21 @@ trait SpatialTrait
         return $this->scopeComparison($query, $geometryColumn, $geometry, 'touches');
     }
 
-    public function scopeOrderBySpatial($query, $geometryColumn, $geometry, $orderFunction, $direction = 'asc')
-    {
+    public function scopeOrderBySpatial(
+        $query,
+        $geometryColumn,
+        $geometry,
+        $orderFunction,
+        $direction = 'asc',
+        $geometryOptions = null
+    ) {
         $this->isColumnAllowed($geometryColumn);
 
         if (!in_array($orderFunction, $this->stOrderFunctions)) {
             throw new UnknownSpatialFunctionException($orderFunction);
         }
-
-        $query->orderByRaw("st_{$orderFunction}(`$geometryColumn`, ST_GeomFromText(?, ?, 'axis-order=long-lat')) {$direction}", [
+        $geometryObjectText = $this->getGeometryObjectText($geometryOptions);
+        $query->orderByRaw("st_{$orderFunction}(`$geometryColumn`, $geometryObjectText) {$direction}", [
             $geometry->toWkt(),
             $geometry->getSrid(),
         ]);
@@ -295,5 +303,14 @@ trait SpatialTrait
     public function scopeOrderByDistanceSphere($query, $geometryColumn, $geometry, $direction = 'asc')
     {
         return $this->scopeOrderBySpatial($query, $geometryColumn, $geometry, 'distance_sphere', $direction);
+    }
+
+    private function getGeometryObjectText($geometryOptions = null)
+    {
+        if ($geometryOptions) {
+            // Avoid default 'axis-order=long-lat', till support Mysql 8
+            return "ST_GeomFromText(?, ?, '$geometryOptions')";
+        }
+        return "ST_GeomFromText(?, ?)";
     }
 }

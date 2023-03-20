@@ -19,7 +19,7 @@
         "ext-pdo": "*",
         "ext-json": "*",
         "geo-io/wkb-parser": "^1.0",
-        "jmikola/geojson": "^1.0"
+        "jmikola/geojson": "^1.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.0",
