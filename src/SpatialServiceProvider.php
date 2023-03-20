@@ -60,5 +60,7 @@ class SpatialServiceProvider extends DatabaseServiceProvider
                 }
             }
         }
+
+        $this->app['config']->set('moova_spatial.mysql_version_8', env('SPATIAL_MYSQL_NEW_VERSION', false));
     }
 }
