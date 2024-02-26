@@ -3,10 +3,11 @@
 namespace Grimzy\LaravelMysqlSpatial\Eloquent;
 
 use Illuminate\Database\Query\Expression;
+use Illuminate\Database\Grammar;
 
 class SpatialExpression extends Expression
 {
-    public function getValue()
+    public function getValue(Grammar $grammar)
     {
         if (config('moova_spatial.mysql_version_8')) {
             return "ST_GeomFromText(?, ?, 'axis-order=long-lat')";
