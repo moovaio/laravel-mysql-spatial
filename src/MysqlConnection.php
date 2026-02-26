@@ -9,16 +9,6 @@ use Illuminate\Database\MySqlConnection as IlluminateMySqlConnection;
 class MysqlConnection extends IlluminateMySqlConnection
 {
     /**
-     * Get the default schema grammar instance.
-     *
-     * @return \Illuminate\Database\Grammar
-     */
-    protected function getDefaultSchemaGrammar()
-    {
-        return $this->withTablePrefix(new MySqlGrammar());
-    }
-
-    /**
      * Get a schema builder instance for the connection.
      *
      * @return \Illuminate\Database\Schema\MySqlBuilder
